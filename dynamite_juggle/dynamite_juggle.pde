@@ -368,7 +368,7 @@ void moveOff() {
 }
 
 void detectShake(float [] _xAcc, float [] _zAcc) {
-  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
+  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
     shakeCount+=2;
   }
   if(shakeCount > 10) {

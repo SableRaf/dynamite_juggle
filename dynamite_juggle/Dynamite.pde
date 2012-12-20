@@ -1,6 +1,8 @@
 class Dynamite {
   Timer timer;
   Timer explosion;
+  
+  boolean isShaken;
 
   int fuseLength=-1; // duration of the countdown
 
@@ -16,6 +18,7 @@ class Dynamite {
   Dynamite() {
     state = SETUP;
     explosion = new Timer(1000); // set the duration of the explosion (in ms)
+    isShaken = false;
   }
 
   void setFuseLength(int _lengthMin, int _lengthMax ) {
@@ -58,6 +61,14 @@ class Dynamite {
   boolean isReady() {
     if (state == READY) return true;
     return false;
+  }
+  
+  boolean isShaken() {
+   return isShaken; 
+  }
+  
+  void isShaken(boolean _isShaken) {
+   isShaken = _isShaken; 
   }
 
   boolean isBurning() {
