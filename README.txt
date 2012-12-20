@@ -1,7 +1,7 @@
 DYNAMITE JUGGLE
 
 A social game for one PS Move and any number of players
-By Rapha\353l de Courville (Twitter: @sableRaph)
+By Raphael de Courville (Twitter: @sableRaph)
  
 Distributed under the GRL CreativeCommons license: 
 http://goo.gl/Ypucq (or see license file attached)
