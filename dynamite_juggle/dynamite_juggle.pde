@@ -36,6 +36,7 @@ import ddf.minim.*;
 Minim minim;
 AudioPlayer audioArm;
 AudioPlayer audioFuse;
+AudioPlayer audioBurn;
 AudioPlayer audioBlast;
 
 Timer quitTimer;
@@ -87,6 +88,7 @@ void setup() {
 
   audioArm = minim.loadFile("arm.wav");
   audioFuse = minim.loadFile("fuse.wav");
+  audioBurn = minim.loadFile("burn.wav");
   audioBlast = minim.loadFile("blast.wav");
 
   quitTimer = new Timer(2000); // How long do you need to press the SELECT button to quit the program?
@@ -132,14 +134,20 @@ void draw() {
     radius = (int)map( _remainingTime, 0f, _fuseLength, 0f, 90f );
     
     if(isShaken) { // Shaking burns away some more time from the fuse
+      playSound("burn");
       dynamite.consume();
       int rand2 = (int)random(200, 255);
       sphereColor = color( rand2, rand2*.1, 0 );
+    } 
+    else if(isPlaying("burn")) {
+      println("stop burning");
+      stopSound("burn");
     }
   }
 
   if (dynamite.isExplosion()) {
     //println("BOOOOOOOOOOOOOOOM!");
+    stopSound("burn");
     stopSound("arm");
     stopSound("fuse");
     playSound("blast");
@@ -197,16 +205,37 @@ void drawColorCircle(color c) {
 
 //--- SOUND ------------------------------------------------------
 
+// TO DO: make this more generic
+
 void playSound(String _soundName) {
+  if (_soundName == "arm" && !audioArm.isPlaying()) {
+    audioArm.play();
+  }
+  if (_soundName == "burn" && !audioBurn.isPlaying()) {
+    audioBurn.loop();
+  }
   if (_soundName == "fuse" && !audioFuse.isPlaying()) {
     audioFuse.loop();
   }
   if (_soundName == "blast" && !audioBlast.isPlaying()) {
     audioBlast.play();
   }
-  if (_soundName == "arm" && !audioArm.isPlaying()) {
-    audioArm.play();
+}
+
+boolean isPlaying(String _soundName) {
+  if (_soundName == "arm" && audioArm.isPlaying()) {
+    return true;
   }
+  if (_soundName == "burn" && audioBurn.isPlaying()) {
+    return true;
+  }
+  if (_soundName == "fuse" && audioFuse.isPlaying()) {
+    return true;
+  }
+  if (_soundName == "blast" && audioBlast.isPlaying()) {
+    return true;
+  }
+  return false;
 }
 
 void stopSound() {
@@ -219,6 +248,10 @@ void stopSound(String _soundName) {
   if (_soundName == "arm") {
     audioArm.rewind();
     audioArm.pause();
+  }
+  if (_soundName == "burn") {
+    audioBurn.rewind();
+    audioBurn.pause();
   }
   if (_soundName == "fuse") {
     audioFuse.pause();
