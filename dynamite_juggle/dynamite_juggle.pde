@@ -41,8 +41,8 @@ AudioPlayer audioBlast;
 Timer quitTimer;
 
 // Min and Max time before the dynamite goes off (in milliseconds)
-int minimumTime = 3000;
-int maximumTime = 5000;
+int minimumTime = 30000;
+int maximumTime = 80000;
 
 PSMove move;
 
@@ -139,6 +139,7 @@ void draw() {
 
   if (dynamite.isExplosion()) {
     //println("BOOOOOOOOOOOOOOOM!");
+    stopSound("arm");
     stopSound("fuse");
     playSound("blast");
     int rand = (int)random(0, 255);
@@ -199,17 +200,23 @@ void playSound(String _soundName) {
   }
 }
 
+void stopSound() {
+  audioArm.pause();
+  audioFuse.pause();
+  audioBlast.pause();
+}
+
 void stopSound(String _soundName) {
+  if (_soundName == "arm") {
+    audioArm.rewind();
+    audioArm.pause();
+  }
   if (_soundName == "fuse") {
     audioFuse.pause();
   }
   if (_soundName == "blast") {
     audioBlast.rewind();
     audioBlast.pause();
-  }
-  if (_soundName == "arm") {
-    audioArm.rewind();
-    audioArm.pause();
   }
 }
 
@@ -349,6 +356,7 @@ void keyPressed() {
 }
 
 void endGame() {
+  stopSound();   // stop all sounds playing
   moveOff();     // we switch of the sphere and rumble before we quit
   exit();
 }
