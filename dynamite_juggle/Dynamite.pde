@@ -1,19 +1,17 @@
 class Dynamite {
-  Timer timer;
-  Timer explosion;
+  private Timer timer;
+  private Timer explosion;
   
-  boolean isShaken;
+  private boolean isShaken;
+  private int fuseLength=-1; // duration of the countdown
+  private boolean triggered;
 
-  int fuseLength=-1; // duration of the countdown
-
-  int SETUP    = 0;
-  int READY    = 1;
-  int FUSE     = 2;
-  int BOOM     = 3;
-  int END      = 4;
-  int state;
-
-  boolean triggered;
+  private int SETUP    = 0;
+  private int READY    = 1;
+  private int FUSE     = 2;
+  private int BOOM     = 3;
+  private int END      = 4;
+  private int state;
 
   Dynamite() {
     state = SETUP;
@@ -67,8 +65,8 @@ class Dynamite {
    return isShaken; 
   }
   
-  void isShaken(boolean _isShaken) {
-   isShaken = _isShaken; 
+  void shake(boolean _shake) {
+   isShaken = _shake; 
   }
 
   boolean isBurning() {
