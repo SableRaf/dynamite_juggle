@@ -7,15 +7,15 @@ Distributed under the GRL CreativeCommons license:
 http://goo.gl/Ypucq (or see license file attached)
  
 HOW TO PLAY
-Press the MOVE button to arm the explosive
-Press the TRIGGER to ignite the fuse
-Pass the dynamite around
-If someone passes you the dynamite, you have to take it!
-Shake the dynamite to make it burn faster!
-Any player touching the stick when it blows up is out of the game
-Press START for a brand new stick of TNT
-The game goes on until one player (or none) remains.
-The winner of the round gets to launch the new dynamite
+1) Press the MOVE button to arm the explosive
+2) Press the TRIGGER to ignite the fuse
+3) Pass the dynamite around
+4) If someone passes you the dynamite, you have to take it!
+5) Shake the dynamite to make it burn faster!
+6) Any player touching the stick when it blows up is out of the game
+7) Press START for a brand new stick of TNT
+8) The game goes on until one player (or none) remains.
+9) The winner of the round gets to launch the new dynamite
  
 Or make your own rules!
  
