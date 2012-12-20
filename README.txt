@@ -21,9 +21,11 @@ Or make your own rules!
  
 DISCLAIMER: The creators of Dynamite Juggle are not liable for 
 an injury to, or death of, a player resulting from the inherent 
-risk of using high explosive materials for recreationnal purpose.
+risk of using high explosive materials for recreational purpose.
  
 PS Move Api By Thomas Perl: http://thp.io/2010/psmove/
 Sound effects made with Bfxr: http://www.bfxr.net/
 
-Many thanks to Douglas Wilson and his great game JS Joust: www.jsjoust.com
+Many thanks to Douglas Wilson* for his inspiration.
+
+* If you don't know him yet, you should see his masterpiece: JS Joust (www.jsjoust.com)
