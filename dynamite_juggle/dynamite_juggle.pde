@@ -98,6 +98,7 @@ void setup() {
 //--- DRAW --------------------------------------------------------------
 
 void draw() {
+  
   if(!dynamite.isExplosion()) background(200);
 
   glow = map( sin( frameCount*.05 ), -1, 1, 10, 80 );
@@ -152,7 +153,7 @@ void draw() {
 
   if (dynamite.isFinished()) {
     //println("Press START to play again");
-    sphereColor = color( 0, 0, 0 );
+    sphereColor = color( 10, 10, 10 );
     rumbleLevel = 0;
     if (isStartPressed) {
       dynamite.reset();
@@ -174,16 +175,24 @@ void draw() {
 } // DRAW END
 
 void drawColorCircle(color c) {
-  stroke(255,255,255);
+  pushStyle();
+  colorMode(HSB);
+  stroke( 0,0,255 ); // White outline, for style
   strokeWeight(3);
-  int red = (int)(red(c) + (255-green(c))/2 + (255-blue(c))/2);
-  int green = (int)(green(c) + (255-red(c))/2 + (255-blue(c))/2);
-  int blue = (int)(blue(c) + (255-red(c))/2 + (255-green(c))/2);
-  fill(red,green,blue);
-  pushMatrix();
-  translate( width*.5, height*.5 );
-  ellipse(0,0,radius,radius);
-  popMatrix();
+  
+  int alpha = (int)brightness(c);   // Transparency
+  
+  pushMatrix();                     // Temporary adjustment of the coordinates system
+  translate( width*.5, height*.5 ); // To the center
+  
+  fill( 0,0,255 );                  // Paint any shape that follows white
+  ellipse( 0,0,radius,radius );         // Draw a white background circle
+  
+  fill( c, alpha );                 // Set color & transparency
+  ellipse( 0,0,radius,radius );         // Draw the color circle
+  
+  popMatrix();                      // Forget the adjustment of the coord system
+  popStyle();
 }
 
 //--- SOUND ------------------------------------------------------
