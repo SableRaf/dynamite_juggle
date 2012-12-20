@@ -52,7 +52,6 @@ boolean isTriggerPressed, isMovePressed, isSquarePressed, isTrianglePressed, isC
 
 int rumbleLevel;
 
-boolean isShaken;
 int shakeCount;
 
 color sphereColor;
@@ -76,8 +75,6 @@ void setup() {
   
   move = new PSMove();    // We need one controller
   sphereColor = color(0); // Default sphere color (0 means ligths off)
-
-  isShaken = false; // true when the controller is wiggled around
 
   moveInit(); // Create the buttons
 
@@ -133,14 +130,13 @@ void draw() {
     float _fuseLength = dynamite.getFuseLength();
     radius = (int)map( _remainingTime, 0f, _fuseLength, 0f, 90f );
     
-    if(isShaken) { // Shaking burns away some more time from the fuse
+    if(dynamite.isShaken()) { // Shaking burns away some more time from the fuse
       playSound("burn");
       dynamite.consume();
       int rand2 = (int)random(200, 255);
-      sphereColor = color( rand2, rand2*.1, 0 );
+      sphereColor = color( rand2, rand2*.7, rand2*.1 );
     } 
     else if(isPlaying("burn")) {
-      println("stop burning");
       stopSound("burn");
     }
   }
@@ -372,16 +368,16 @@ void moveOff() {
 }
 
 void detectShake(float [] _xAcc, float [] _zAcc) {
-  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
+  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
     shakeCount+=2;
   }
   if(shakeCount > 10) {
-    isShaken = true;
-    println("Stop shaking me!!");
+    //println("Stop shaking me!!");
+    dynamite.isShaken(true);
     if(shakeCount > 15) shakeCount=15;
   }
   else {
-    isShaken = false;
+    dynamite.isShaken(false);
   } 
   if(shakeCount>0) shakeCount--;
 }
