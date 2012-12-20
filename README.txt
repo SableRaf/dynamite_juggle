@@ -26,8 +26,8 @@ risk of using high explosive materials for recreational purpose.
 TECHNICAL NOTES
 - You will need a playstation move controller already paired with your computer.
   Instructions can be found in the PS Move API repository (https://github.com/thp/psmoveapi)
-- So far, it has been tested on MacOS 10.7.5 only. Binaries for Windows and Linux are very much alpha.
-  If you try them, please let me know how it went in the issues section.
+- So far, it has been tested on MacOS 10.7.5 only. Binaries for Windows and Linux are 
+  very much alpha. If you try them, please let me know how it went in the issues section.
  
 PS Move Api By Thomas Perl: http://thp.io/2010/psmove/
 Sound effects made with Bfxr: http://www.bfxr.net/
