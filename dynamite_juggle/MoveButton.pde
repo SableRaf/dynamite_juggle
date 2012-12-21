@@ -41,4 +41,5 @@ class MoveButton {
   PVector getAnalog() {
     return analog;
   }
-};
+}
+

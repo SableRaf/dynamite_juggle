@@ -31,10 +31,12 @@
 
 import io.thp.psmove.*;
 
-import ddf.minim.*;
-
 Minim minim;
+
+Audio audio;
+
 AudioPlayer audioArm;
+AudioPlayer audioIgnite;
 AudioPlayer audioFuse;
 AudioPlayer audioBurn;
 AudioPlayer audioBlast;
@@ -79,14 +81,17 @@ void setup() {
   moveInit(); // Create the buttons
 
   dynamite = new Dynamite(); // Create the dynamite
+  
+  minim = new Minim(this);  // We pass this to Minim so that it can load files from the data directory
 
-  // We pass this to Minim so that it can load files from the data directory
-  minim = new Minim(this);
+  audio = new Audio("/data","wav");
 
-  audioArm = minim.loadFile("arm.wav");
-  audioFuse = minim.loadFile("fuse.wav");
-  audioBurn = minim.loadFile("burn.wav");
-  audioBlast = minim.loadFile("blast.wav");
+  // We load all the sound FX
+  audioArm    = minim.loadFile("arm.wav");
+  audioIgnite = minim.loadFile("ignite.wav");
+  audioFuse   = minim.loadFile("fuse.wav");
+  audioBurn   = minim.loadFile("burn.wav");
+  audioBlast  = minim.loadFile("blast.wav");
 
   quitTimer = new Timer(2000); // How long do you need to press the SELECT button to quit the program?
 
@@ -104,12 +109,16 @@ void draw() {
 
   if (dynamite.isSetup()) {
     //println("Setup");
-    stopSound("fuse");
-    stopSound("blast");
+    //stopSound("fuse");
+    //stopSound("blast");
+    
+    audio.stopPlay("fuse","blast");
+    
     sphereColor = color( 0, glow, glow );
     if (isMovePressed) {
       dynamite.setFuseLength( minimumTime, maximumTime );
-      playSound("arm");
+      //playSound("arm");
+      audio.playOnce("arm");
     }
   }
 
@@ -117,13 +126,14 @@ void draw() {
     //println("Ready...");
     int rand = (int)random(220, 255);
     sphereColor = color( rand, 0, 0);
-    if (isTriggerPressed)
+    if (triggerValue>240)
       dynamite.igniteFuse();
   }
 
   if (dynamite.isBurning()) {
     //println("The fuse is burning...");
-    playSound("fuse");
+    //playSound("fuse");
+    audio.playLoop("fuse");
     int rand = (int)random(100, 200);
     sphereColor = color( rand, rand/2, 0 );
     float _remainingTime = (float)dynamite.getRemainingTime();
@@ -131,22 +141,30 @@ void draw() {
     radius = (int)map( _remainingTime, 0f, _fuseLength, 0f, 90f );
     
     if(dynamite.isShaken()) { // Shaking burns away some more time from the fuse
-      playSound("burn");
+      //playSound("burn");
+      audio.playLoop("burn");
       dynamite.consume();
       int rand2 = (int)random(200, 255);
       sphereColor = color( rand2, rand2*.7, rand2*.1 );
     } 
+    /*
     else if(isPlaying("burn")) {
-      stopSound("burn");
+      stopSound("burn"); 
+    }
+    */
+    else if(audio.isPlaying("burn")) {
+      audio.stopPlay("burn"); 
     }
   }
 
   if (dynamite.isExplosion()) {
     //println("BOOOOOOOOOOOOOOOM!");
-    stopSound("burn");
-    stopSound("arm");
-    stopSound("fuse");
-    playSound("blast");
+    //stopSound("burn");
+    //stopSound("arm");
+    //stopSound("fuse");
+    //playSound("blast");
+    audio.stopPlay("burn","arm","fuse");
+    audio.playOnce("blast");
     int rand = (int)random(0, 255);
     sphereColor = color( rand, rand, rand );
     rumbleLevel = 255;
@@ -198,67 +216,6 @@ void drawColorCircle(color c) {
   popMatrix();                      // Forget the adjustment of the coord system
   popStyle();
 }
-
-//--- SOUND ------------------------------------------------------
-
-// TO DO: make this more generic
-
-void playSound(String _soundName) {
-  if (_soundName == "arm" && !audioArm.isPlaying()) {
-    audioArm.play();
-  }
-  if (_soundName == "burn" && !audioBurn.isPlaying()) {
-    audioBurn.loop();
-  }
-  if (_soundName == "fuse" && !audioFuse.isPlaying()) {
-    audioFuse.loop();
-  }
-  if (_soundName == "blast" && !audioBlast.isPlaying()) {
-    audioBlast.play();
-  }
-}
-
-boolean isPlaying(String _soundName) {
-  if (_soundName == "arm" && audioArm.isPlaying()) {
-    return true;
-  }
-  if (_soundName == "burn" && audioBurn.isPlaying()) {
-    return true;
-  }
-  if (_soundName == "fuse" && audioFuse.isPlaying()) {
-    return true;
-  }
-  if (_soundName == "blast" && audioBlast.isPlaying()) {
-    return true;
-  }
-  return false;
-}
-
-void stopSound() {
-  audioArm.pause();
-  audioFuse.pause();
-  audioBlast.pause();
-}
-
-void stopSound(String _soundName) {
-  if (_soundName == "arm") {
-    audioArm.rewind();
-    audioArm.pause();
-  }
-  if (_soundName == "burn") {
-    audioBurn.rewind();
-    audioBurn.pause();
-  }
-  if (_soundName == "fuse") {
-    audioFuse.pause();
-  }
-  if (_soundName == "blast") {
-    audioBlast.rewind();
-    audioBlast.pause();
-  }
-}
-
-
 
 //--- MOVE ----------------------------------------------------------
 
@@ -357,6 +314,47 @@ void moveUpdate(int _rumbleLevel, color _sphereColor) {
   r = (int)red(_sphereColor);
   g = (int)green(_sphereColor);
   b = (int)blue(_sphereColor);
+  move.set_leds(r, g, b);
+  move.update_leds();
+}
+
+void moveOff() {
+  move.set_rumble(0);
+  move.set_leds(0, 0, 0);
+  move.update_leds();
+}
+
+void detectShake(float [] _xAcc, float [] _zAcc) {
+  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
+    shakeCount+=2;
+  }
+  if(shakeCount > 10) {
+    //println("Stop shaking me!!");
+    dynamite.shake(true);
+    if(shakeCount > 15) shakeCount=15;
+  }
+  else {
+    dynamite.shake(false);
+  } 
+  if(shakeCount>0) shakeCount--;
+}
+
+
+//--------------------------------------------------------------------
+
+void keyPressed() {
+  if (key == 27) { // escape key
+    endGame();
+  }
+}
+
+void endGame() {
+  audio.stopPlay(); // stop all sounds playing 
+  moveOff();        // we switch of the sphere and rumble
+  exit();           // close the sketch
+}
+
+e(_sphereColor);
   move.set_leds(r, g, b);
   move.update_leds();
 }
