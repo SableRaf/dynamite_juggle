@@ -4,50 +4,138 @@ import java.io.File; // Should be fixed in version 2.0b7++
 
 class Audio {
 
+  private String folder, extension;
+
+
   HashMap<String, AudioPlayer> audioPlayers; 
 
   Audio(String _folder, String _extension) {
+    folder    = _folder;
+    extension = _extension;
     int _fileCount = countFiles(_folder, _extension);
     audioPlayers = new HashMap<String, AudioPlayer>(_fileCount);
     loadFiles(_folder, _extension);
   }
 
   void playOnce(String _key) {
-    AudioPlayer _player = getAudioPlayer(_key);
-    if(!_player.isPlaying()) _player.play();
+    if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+      if (null!=_player) { // Is there a value corresponding to that key?
+        if (!_player.isPlaying()) 
+          _player.play(0);
+      }
+      else {
+        println("Error: playOnce(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: playOnce(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    }
   }
 
   void playLoop(String _key) {
-    AudioPlayer _player = getAudioPlayer(_key);
-    if(!_player.isPlaying())  _player.loop();
+    if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+
+      if (null!=_player) { // Is there a value corresponding to that key?
+        if (!_player.isPlaying())  
+          _player.loop();
+      }
+      else {
+        println("Error: playLoop(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: playLoop(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    }
   }
 
-  void stopPlay() {
-    for(AudioPlayer _player: audioPlayers.values()) {
-      if(_player.isPlaying()) _player.pause();
-      _player.rewind();
+  void stop() {
+    for (String _key: audioPlayers.keySet()) {
+      if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+        AudioPlayer _player = getAudioPlayer(_key);
+
+        if ( null!=_player ) { // Is there a value corresponding to that key?
+          if (_player.isPlaying()) 
+            _player.pause();
+
+          _player.rewind();
+        }
+        else {
+          println("Error: stop() > no value in audioPlayers Hashmap for \""+_key+"\"");
+        }
+      }
+      else {
+        println("Error: stop() \""+_key+"\" > no such key in audioPlayers HashMap.");
+      }
     }
   }
 
   void stopPlay(String... _keys) {
     for (String _key: _keys) {
-      AudioPlayer _player = getAudioPlayer(_key);
-      if(_player.isPlaying()) _player.pause();
-      _player.rewind();
+      if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+        AudioPlayer _player = getAudioPlayer(_key);
+        if ( null!=_player ) { // Is there a value corresponding to that key?
+          if (_player.isPlaying()) 
+            _player.pause();
+
+          _player.rewind();
+        }  
+        else {
+          println("Error: stopPlay(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+        }
+      }
+      else {
+        println("Error: stopPlay(\""+_key+"\") > no such key in audioPlayers HashMap.");
+      }
     }
   }
-  
+
   boolean isPlaying(String _key) {
-    AudioPlayer _player = getAudioPlayer(_key);
-    boolean _isPlaying = _player.isPlaying();
-    return _isPlaying;
+    if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+      if ( null != _player) { // Is there a value corresponding to that key?
+        boolean _isPlaying = _player.isPlaying();
+        return _isPlaying;
+      }
+      else {
+        println("Error: isPlaying(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+        return false;
+      }
+    }
+    else {
+      println("Error: isPlaying(\""+_key+"\") > no such key in audioPlayers HashMap.");
+      return false;
+    }
+  }
+
+  void close() {
+    println("Closing all players");
+    for (String _key: audioPlayers.keySet()) {
+      AudioPlayer _player = getAudioPlayer(_key);
+      if (null!=_player) { // Is there a value corresponding to that key?
+        println("closing \""+ _key +"\" AudioPlayer...");
+        try {
+          _player.close();
+        } 
+        catch (Exception ex) {
+          println("Could not close player \""+_key+"\"");
+        }
+      }
+    }
   }
 
   // Returns a specific player or null if not found
   protected AudioPlayer getAudioPlayer(String _key) {
     if (audioPlayers.containsKey(_key)) {
-      AudioPlayer _audioPlayer = audioPlayers.get(_key);
-      return _audioPlayer;
+      try {
+        AudioPlayer _audioPlayer = audioPlayers.get(_key);
+        if (null!= _audioPlayer) // Is there a value corresponding to that key?
+          return _audioPlayer;
+      }
+      catch (Exception ex) {
+        println("Could not retrieve player \""+_key+"\"");
+      }
     }
     return null;
   }
@@ -58,16 +146,16 @@ class Audio {
     loadFiles(_folder, _extension);
   }
 
-  // Loads the shapes from a folder
+  // Loads the files from a folder
   protected void loadFiles(String _folder, String _extension) {
     ArrayList<String> files = listFiles(_folder, _extension);
 
     for (String _fileName : files) {
-      println("Now retrieving "+_fileName+" from "+_folder+" folder.");
-      AudioPlayer _audioPlayer = minim.loadFile(_folder+"/"+_fileName);
-      if (null != _audioPlayer) {
-        String _key = trimFileName(_fileName); // get the name without the extension
-        audioPlayers.put( _key, _audioPlayer);           // fill the Hashtable
+      String _key = trimFileName(_fileName); // get the name without the extension
+      println("Creating AudioPlayer > \""+_key+"\"");
+      AudioPlayer _player = minim.loadFile(_folder+"/"+_fileName);
+      if (null != _player) {
+        audioPlayers.put( _key, _player);           // fill the Hashtable
       }
       else {
         println("Error: file "+ _fileName +" does not exist or is not a valid "+_extension+".");
@@ -83,21 +171,21 @@ class Audio {
   }
 
   // Lists the files with a given extentions in a certain folder
-  protected ArrayList<String> listFiles(String folderName, String extention) {
+  protected ArrayList<String> listFiles(String _folderName, String _extention) {
     ArrayList<String> _fileNameList = new ArrayList<String>();
-    String folderPath = sketchPath + folderName;
+    String folderPath = sketchPath + _folderName;
     if (folderPath != null) {
       File file = new File(folderPath);
       File[] files = file.listFiles();
       for (int i = 0; i < files.length; i++) {
-        String fileName = files[i].getName();
-        int extensionIndex = fileName.lastIndexOf(".");
-        if (fileName.substring(extensionIndex + 1).equalsIgnoreCase(extention)) {
-          _fileNameList.add(fileName);
-          println("Listed new ."+extention+" file > "+ fileName);
+        String _fileName = files[i].getName();
+        int extensionIndex = _fileName.lastIndexOf(".");
+        if (_fileName.substring(extensionIndex + 1).equalsIgnoreCase(_extention)) {
+          _fileNameList.add(_fileName);
+          println("Listed new ."+_extention+" file > "+_folderName+"/"+_fileName);
         }
         else {
-          println("Skipped file (not ."+extention+" file) > "+ fileName);
+          println("Skipped file (not ."+_extention+" file) > "+_folderName+"/"+ _fileName);
         }
       }
     }

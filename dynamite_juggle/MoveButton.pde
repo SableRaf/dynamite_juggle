@@ -42,4 +42,3 @@ class MoveButton {
     return analog;
   }
 }
-

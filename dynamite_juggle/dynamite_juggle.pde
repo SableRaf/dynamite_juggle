@@ -28,18 +28,21 @@
  * Sound effects made with Bfxr: http://www.bfxr.net/
  
  */
+ 
+ /*
+    TO DO
+    - Mute the fuse sound just before the explosion (implement a Sound::fadeOut(int time))
+    - Try softening the "burn" sound and having a louder "fuse" when shaking instead (setVolume())
+    - Add a cracking sound to the trigger presses
+    - Add support for multiple sticks
+    - Fix: pressing MOVE while fuse is on makes the indicator circle turn red...
+ 
+ */
 
 import io.thp.psmove.*;
 
 Minim minim;
-
 Audio audio;
-
-AudioPlayer audioArm;
-AudioPlayer audioIgnite;
-AudioPlayer audioFuse;
-AudioPlayer audioBurn;
-AudioPlayer audioBlast;
 
 Timer quitTimer;
 
@@ -72,6 +75,8 @@ MoveButton[] moveButtons = new MoveButton[9];  // The move controller has 9 butt
 //--- SETUP ---------------------------------------------------------------
 
 void setup() {
+  prepareExitHandler(); // needed to execute code at shutdown
+  
   size(100, 100);
   noStroke();
   
@@ -83,15 +88,7 @@ void setup() {
   dynamite = new Dynamite(); // Create the dynamite
   
   minim = new Minim(this);  // We pass this to Minim so that it can load files from the data directory
-
   audio = new Audio("/data","wav");
-
-  // We load all the sound FX
-  audioArm    = minim.loadFile("arm.wav");
-  audioIgnite = minim.loadFile("ignite.wav");
-  audioFuse   = minim.loadFile("fuse.wav");
-  audioBurn   = minim.loadFile("burn.wav");
-  audioBlast  = minim.loadFile("blast.wav");
 
   quitTimer = new Timer(2000); // How long do you need to press the SELECT button to quit the program?
 
@@ -109,8 +106,6 @@ void draw() {
 
   if (dynamite.isSetup()) {
     //println("Setup");
-    //stopSound("fuse");
-    //stopSound("blast");
     
     audio.stopPlay("fuse","blast");
     
@@ -132,8 +127,9 @@ void draw() {
 
   if (dynamite.isBurning()) {
     //println("The fuse is burning...");
-    //playSound("fuse");
+    
     audio.playLoop("fuse");
+    
     int rand = (int)random(100, 200);
     sphereColor = color( rand, rand/2, 0 );
     float _remainingTime = (float)dynamite.getRemainingTime();
@@ -141,17 +137,11 @@ void draw() {
     radius = (int)map( _remainingTime, 0f, _fuseLength, 0f, 90f );
     
     if(dynamite.isShaken()) { // Shaking burns away some more time from the fuse
-      //playSound("burn");
       audio.playLoop("burn");
       dynamite.consume();
       int rand2 = (int)random(200, 255);
       sphereColor = color( rand2, rand2*.7, rand2*.1 );
     } 
-    /*
-    else if(isPlaying("burn")) {
-      stopSound("burn"); 
-    }
-    */
     else if(audio.isPlaying("burn")) {
       audio.stopPlay("burn"); 
     }
@@ -159,10 +149,6 @@ void draw() {
 
   if (dynamite.isExplosion()) {
     //println("BOOOOOOOOOOOOOOOM!");
-    //stopSound("burn");
-    //stopSound("arm");
-    //stopSound("fuse");
-    //playSound("blast");
     audio.stopPlay("burn","arm","fuse");
     audio.playOnce("blast");
     int rand = (int)random(0, 255);
@@ -187,10 +173,10 @@ void draw() {
     if (!quitTimer.isRunning())
       quitTimer.start();
     if (quitTimer.isFinished())
-      endGame();
+      exit();
   }
 
-  moveUpdate(rumbleLevel, sphereColor);           // Get the buttons value (trigger only) and presses, and update actuators/indicators
+  moveUpdate(rumbleLevel, sphereColor); // Get the buttons value (trigger only) and presses, and update actuators/indicators
 
   drawColorCircle(sphereColor); // Draw time indicator
 
@@ -342,58 +328,14 @@ void detectShake(float [] _xAcc, float [] _zAcc) {
 
 //--------------------------------------------------------------------
 
-void keyPressed() {
-  if (key == 27) { // escape key
-    endGame();
-  }
-}
+// Called just before stop()
+void quit() {
+   moveOff();  // we switch of the sphere and rumble
 
-void endGame() {
-  audio.stopPlay(); // stop all sounds playing 
-  moveOff();        // we switch of the sphere and rumble
-  exit();           // close the sketch
-}
-
-e(_sphereColor);
-  move.set_leds(r, g, b);
-  move.update_leds();
-}
-
-void moveOff() {
-  move.set_rumble(0);
-  move.set_leds(0, 0, 0);
-  move.update_leds();
-}
-
-void detectShake(float [] _xAcc, float [] _zAcc) {
-  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
-    shakeCount+=2;
-  }
-  if(shakeCount > 10) {
-    //println("Stop shaking me!!");
-    dynamite.isShaken(true);
-    if(shakeCount > 15) shakeCount=15;
-  }
-  else {
-    dynamite.isShaken(false);
-  } 
-  if(shakeCount>0) shakeCount--;
-}
-
-
-
-
-//--------------------------------------------------------------------
-
-void keyPressed() {
-  if (key == 27) { // escape key
-    endGame();
-  }
-}
-
-void endGame() {
-  stopSound();   // stop all sounds playing
-  moveOff();     // we switch of the sphere and rumble before we quit
-  exit();
+  // --- Cause of errors --- 
+  // --- Relevant discussion: https://forum.processing.org/topic/minim-close-sound-file ---
+  //audio.stop();  // stop all the sounds playing
+  //audio.close(); // release AudioPlayer threads
+  //minim.stop();  // release minim
 }
 
