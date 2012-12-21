@@ -3,9 +3,6 @@ DYNAMITE JUGGLE
 A social game for one PS Move and any number of players
 By Raphael de Courville (Twitter: @sableRaph)
  
-Distributed under the GRL CreativeCommons license: 
-http://goo.gl/Ypucq (or see license file attached)
- 
 HOW TO PLAY
 1) Press the MOVE button to arm the explosive
 2) Press the TRIGGER to ignite the fuse
@@ -18,6 +15,8 @@ HOW TO PLAY
 9) The winner of the round gets to launch the new dynamite
  
 Or make your own rules!
+
+Video preview: http://goo.gl/2qOkL
  
 DISCLAIMER: The creators of Dynamite Juggle are not liable for 
 an injury to, or death of, a player resulting from the inherent 
@@ -31,6 +30,9 @@ TECHNICAL NOTES
  
 PS Move Api By Thomas Perl: http://thp.io/2010/psmove/
 Sound effects made with Bfxr: http://www.bfxr.net/
+
+Distributed under the GRL CreativeCommons license: 
+http://goo.gl/Ypucq (or see license file attached)
 
 Many thanks to Douglas Wilson* for his inspiration.
 
