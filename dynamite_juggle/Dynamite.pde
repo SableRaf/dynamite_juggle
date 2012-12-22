@@ -23,19 +23,28 @@ class Dynamite {
     state = READY;
   }
   
-  public String detonator( int _triggerValue, int _previousTriggerValue, int _zeroCount ) {
+  public String detonatorSuccess( int _triggerValue, ArrayList<Integer> _triggerHistory ) {
     
-    String _ignition = new String();
+    ArrayList<Integer> _detonatorHistory = _triggerHistory;
+    int _detonatorVal = _triggerValue;
+    int _prevDtnVal = _detonatorHistory.get( _detonatorHistory.size()-1 );
     
-    // Check if the trigger was pressed swiftly enough...
-    if ( _triggerValue == 255 && _zeroCount >= 1 ) {
-      _ignition = "success";
+    // How many zeros in the most recent values of the detonator?
+    int _zeroCount = 0;
+    for(int i: _detonatorHistory) {
+     if(i==0) _zeroCount++; 
     }
-    else if( _triggerValue == 255 && _previousTriggerValue < 255) {
-      _ignition = "fail";
+    
+    //println("triggerValue = "+triggerValue);
+    
+    // Check if the detonator was pressed swiftly enough...
+    if ( _detonatorVal == 255 && _zeroCount >= 1 ) {
+      return "success";
     }
-
-    return _ignition;
+    else if( _detonatorVal == 255 && _prevDtnVal < 255) {
+      return "failure";
+    }
+    return "wait";
   }
 
   public void igniteFuse() {

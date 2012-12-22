@@ -29,7 +29,7 @@
  
  */
  
-boolean isDebugMode = false;
+boolean isDebugMode = true;
 
 int detonatorThreshold = 1; // the lower the number, the harder it is to ignite
 
@@ -129,26 +129,19 @@ void draw() {
     int rand = (int)random(220, 255);   
     sphereColor = color( rand, 0, 0);
     
-    // How many zeros in the most recent values of trigger?
-    int _zeroCount = 0;
-    for(int i: triggerHistory) {
-     if(i==0) _zeroCount++; 
-    }
+    // Monitor the values of the trigger to catch ignition and failed ignition events
+    String _ignition = dynamite.detonatorSuccess( triggerValue, triggerHistory );
     
-    //println("triggerValue = "+triggerValue);
-
-    String ignition = dynamite.detonator( triggerValue, previousTriggerValue, _zeroCount );
-    if ( ignition == "success" ) {
+    if(_ignition == "success") {
       dynamite.igniteFuse();
       audio.playOnce("ignite");
     }
-    else if( ignition == "fail" ) {
+    else if(_ignition == "failure")  {
+      sphereColor = color( 50, 0, 0);
       println("Ignition failed. Gotta press harder on that detonator!");
       audio.playOnce("igniteFail");
     }
-    else {
-      // No ignition, do nothing
-    }
+    
   }
 
 
@@ -195,7 +188,9 @@ void draw() {
     }
   }
   else if (isPsPressed && isDebugMode) {
+    audio.stop();
     dynamite.reset();
+    dynamite.arm();
     radius = startRadius;
   }
 
