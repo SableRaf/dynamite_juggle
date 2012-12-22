@@ -19,7 +19,7 @@ private void prepareExitHandler () {
 
 // This is called on exit
 void cleanUpAndClose() {
-  println("Shuting down");
+  println("Shutting down");
 
   quit();
 

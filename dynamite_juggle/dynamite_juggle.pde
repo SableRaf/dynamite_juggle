@@ -29,15 +29,9 @@
  
  */
  
- /*
-    TO DO
-    - Mute the fuse sound just before the explosion (implement a Sound::fadeOut(int time))
-    - Try softening the "burn" sound and having a louder "fuse" when shaking instead (setVolume())
-    - Add a cracking sound to the trigger presses
-    - Add support for multiple sticks
-    - Fix: pressing MOVE while fuse is on makes the indicator circle turn red...
- 
- */
+boolean isDebugMode = false;
+
+int detonatorThreshold = 1; // the lower the number, the harder it is to ignite
 
 import io.thp.psmove.*;
 
@@ -52,8 +46,13 @@ int maximumTime = 80000;
 
 PSMove move;
 
-int triggerValue;
+int triggerValue, previousTriggerValue;
+
+ArrayList<Integer> triggerHistory; // Will save the two last values of trigger
+
 boolean isTriggerPressed, isMovePressed, isSquarePressed, isTrianglePressed, isCrossPressed, isCirclePressed, isStartPressed, isSelectPressed, isPsPressed; 
+
+
 
 int rumbleLevel;
 
@@ -86,11 +85,13 @@ void setup() {
   moveInit(); // Create the buttons
 
   dynamite = new Dynamite(); // Create the dynamite
+  //dynamite.setDetonatorSensitivity( detonatorThreshold );
+  dynamite.setFuseLength( minimumTime, maximumTime );
   
   minim = new Minim(this);  // We pass this to Minim so that it can load files from the data directory
   audio = new Audio("/data","wav");
 
-  quitTimer = new Timer(2000); // How long do you need to press the SELECT button to quit the program?
+  quitTimer = new Timer(1500); // How long do you need to press the SELECT button to quit the program?
 
 } // SETUP END
 
@@ -104,30 +105,55 @@ void draw() {
 
   glow = map( sin( frameCount*.05 ), -1, 1, 10, 80 );
 
+  // Debug
+  //println("Dynamite state: "+dynamite.getState());
+  
   if (dynamite.isSetup()) {
     //println("Setup");
     
     audio.stopPlay("fuse","blast");
     
+    // Show a glowing blue light
     sphereColor = color( 0, glow, glow );
+    
     if (isMovePressed) {
-      dynamite.setFuseLength( minimumTime, maximumTime );
-      //playSound("arm");
+      dynamite.arm(); // Remove the security from the detonator
       audio.playOnce("arm");
     }
   }
 
   if (dynamite.isReady()) {
     //println("Ready...");
-    int rand = (int)random(220, 255);
+    
+    // Show a flickering red light
+    int rand = (int)random(220, 255);   
     sphereColor = color( rand, 0, 0);
-    if (triggerValue>240)
+    
+    // How many zeros in the most recent values of trigger?
+    int _zeroCount = 0;
+    for(int i: triggerHistory) {
+     if(i==0) _zeroCount++; 
+    }
+    
+    //println("triggerValue = "+triggerValue);
+
+    String ignition = dynamite.detonator( triggerValue, previousTriggerValue, _zeroCount );
+    if ( ignition == "success" ) {
       dynamite.igniteFuse();
+      audio.playOnce("ignite");
+    }
+    else if( ignition == "fail" ) {
+      println("Ignition failed. Gotta press harder on that detonator!");
+      audio.playOnce("igniteFail");
+    }
+    else {
+      // No ignition, do nothing
+    }
   }
+
 
   if (dynamite.isBurning()) {
     //println("The fuse is burning...");
-    
     audio.playLoop("fuse");
     
     int rand = (int)random(100, 200);
@@ -167,6 +193,10 @@ void draw() {
       dynamite.reset();
       radius = startRadius;
     }
+  }
+  else if (isPsPressed && isDebugMode) {
+    dynamite.reset();
+    radius = startRadius;
   }
 
   if (isSelectPressed) {
@@ -209,6 +239,7 @@ void moveInit() {
   for (int i=0; i<moveButtons.length; i++) {
     moveButtons[i] = new MoveButton();
   }
+  triggerHistory = new ArrayList<Integer>(); // We want to keep tracks of previous trigger values to detect ignition
 }
 
 void moveUpdate(int _rumbleLevel, color _sphereColor) {
@@ -283,6 +314,14 @@ void moveUpdate(int _rumbleLevel, color _sphereColor) {
     }
   }
 
+  previousTriggerValue = triggerValue; // record the last value
+
+  // Save previous trigger values in a list
+  triggerHistory.add(previousTriggerValue);
+  if( triggerHistory.size() > 2 + detonatorThreshold ) {
+     triggerHistory.remove(0);
+  }
+
   // Store the values in conveniently named variables
   triggerValue         = moveButtons[0].value;
   isTriggerPressed     = moveButtons[0].getPressed(); // The trigger is considered pressed if value > 0
@@ -326,7 +365,7 @@ void detectShake(float [] _xAcc, float [] _zAcc) {
 }
 
 
-//--------------------------------------------------------------------
+//---- Stop ------------------------------------------------------------
 
 // Called just before stop()
 void quit() {
@@ -339,3 +378,20 @@ void quit() {
   //minim.stop();  // release minim
 }
 
+
+//--- Generic operations ---------------------------------------------
+
+// Calculates the arithmetic mean of all values in and Arraylist<Integer>
+int arrayMean( ArrayList<Integer> _arrayList ) {
+  int _result = arraySum(_arrayList) / _arrayList.size();
+  return _result;
+}
+
+// Adds together all the values in an Arraylist<Integer>
+int arraySum(ArrayList<Integer> _arrayList) {
+  int _result=0;
+  for ( int i: _arrayList ) {
+      _result += i;
+  }
+  return _result;
+}

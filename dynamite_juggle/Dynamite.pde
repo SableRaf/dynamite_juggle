@@ -18,28 +18,27 @@ class Dynamite {
     explosion = new Timer(1000); // set the duration of the explosion (in ms)
     isShaken = false;
   }
-
-  void setFuseLength(int _lengthMin, int _lengthMax ) {
-    fuseLength = (int)random(_lengthMin, _lengthMax);
-    timer = new Timer(fuseLength);
+  
+  public void arm() {
     state = READY;
   }
-
-  int getFuseLength() {
-    if ( fuseLength == -1 ) 
-      println("No fuse yet. Can't tell length.");
-    return fuseLength;
-  }
-
-  int getRemainingTime() {
-    return timer.getRemaining();
-  }
   
-  void consume() {
-    timer.decrement();
+  public String detonator( int _triggerValue, int _previousTriggerValue, int _zeroCount ) {
+    
+    String _ignition = new String();
+    
+    // Check if the trigger was pressed swiftly enough...
+    if ( _triggerValue == 255 && _zeroCount >= 1 ) {
+      _ignition = "success";
+    }
+    else if( _triggerValue == 255 && _previousTriggerValue < 255) {
+      _ignition = "fail";
+    }
+
+    return _ignition;
   }
 
-  void igniteFuse() {
+  public void igniteFuse() {
     if (null!=timer) {
       println("started the fuse");
       timer.start();
@@ -50,33 +49,65 @@ class Dynamite {
       println("You have to choose a fuse length before you can ignite it.");
     }
   }
+  
+  public void consume() {
+    timer.decrement();
+  }
+  
+  public void reset() {
+    triggered = false;
+    state = SETUP;
+  }
+  
+  // --- Getters ---------------------------------
 
-  boolean isSetup() {
+  public int getFuseLength() {
+    if ( fuseLength == -1 ) 
+      println("No fuse yet. Can't tell length.");
+    return fuseLength;
+  }
+
+  public int getRemainingTime() {
+    return timer.getRemaining();
+  }
+  
+  public String getState() {
+    switch(state) {
+      case 0: return "Setup";
+      case 1: return "Ready";
+      case 2: return "Fuse";
+      case 3: return "Exploding";
+      case 4: return "End";
+      default: return "Something went wrong: Invalid state";
+    }
+  }
+
+  public boolean isSetup() {
     if (state == SETUP) return true;
     return false;
   }
 
-  boolean isReady() {
+  public boolean isReady() {
     if (state == READY) return true;
     return false;
   }
   
-  boolean isShaken() {
+  public boolean isShaken() {
    return isShaken; 
   }
   
-  void shake(boolean _shake) {
+  public void shake(boolean _shake) {
    isShaken = _shake; 
   }
 
-  boolean isBurning() {
+  public boolean isBurning() {
     if (state == FUSE) {
       return true;
     }
     return false;
   }
 
-  boolean isExplosion() {
+  public boolean isExplosion() {
     if (triggered && timer.isFinished() && state != END) {
       if(state!=BOOM) explosion.start();
       state = BOOM;
@@ -85,7 +116,7 @@ class Dynamite {
     return false;
   }
 
-  boolean isFinished() {
+  public boolean isFinished() {
     if (state == BOOM && explosion.isFinished()) 
     { 
       state = END;
@@ -97,10 +128,12 @@ class Dynamite {
     }
     return false;
   }
+  
+  // --- Setters ---------------------------------
 
-  void reset() {
-    triggered = false;
-    state = SETUP;
+  public void setFuseLength(int _lengthMin, int _lengthMax ) {
+    fuseLength = (int)random(_lengthMin, _lengthMax);
+    timer = new Timer(fuseLength);
   }
 }
 

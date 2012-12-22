@@ -21,8 +21,8 @@ class Audio {
     if (audioPlayers.containsKey(_key)) { // Is that a valid key?
       AudioPlayer _player = getAudioPlayer(_key);
       if (null!=_player) { // Is there a value corresponding to that key?
-        if (!_player.isPlaying()) 
-          _player.play(0);
+        if (!_player.isPlaying()) // No need to play it if it's already playing
+          _player.play(0); // Play from the begining
       }
       else {
         println("Error: playOnce(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
@@ -38,7 +38,7 @@ class Audio {
       AudioPlayer _player = getAudioPlayer(_key);
 
       if (null!=_player) { // Is there a value corresponding to that key?
-        if (!_player.isPlaying())  
+        if (!_player.isPlaying()) // No need to play it if it's already playing  
           _player.loop();
       }
       else {
