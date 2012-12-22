@@ -22,12 +22,15 @@ DISCLAIMER: The creators of Dynamite Juggle are not liable for
 an injury to, or death of, a player resulting from the inherent 
 risk of using high explosive materials for recreational purpose.
 
-TECHNICAL NOTES
-- You will need a playstation move controller already paired with your computer.
-  Instructions can be found in the PS Move API repository (https://github.com/thp/psmoveapi)
-- So far, it has been tested on MacOS 10.7.5 only. Binaries for Windows and Linux are 
-  very much alpha. If you try them, please let me know how it went in the issues section.
- 
+HOW TO GET YOUR MOVE CONTROLLER TO WORK ON YOUR COMPUTER
+Douglas Wilson created a pairing utility for the PS Move. Get it by downloading
+uniMove : http://www.copenhagengamecollective.org/projects/unimove/
+Extract the package and get to the folder called "Pairing Utility".
+
+COMPATIBILITY
+So far, Dynamite Juggle work on MacOS 10.7.5 only. It will hopefully
+also be available for Linux and Windows eventually.
+
 PS Move Api By Thomas Perl: http://thp.io/2010/psmove/
 Sound effects made with Bfxr: http://www.bfxr.net/
 
