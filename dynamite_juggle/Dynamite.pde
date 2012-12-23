@@ -64,6 +64,7 @@ class Dynamite {
   }
   
   public void reset() {
+    timer.reset();
     triggered = false;
     state = SETUP;
   }
@@ -77,7 +78,8 @@ class Dynamite {
   }
 
   public int getRemainingTime() {
-    return timer.getRemaining();
+    int _millis =  timer.getRemaining();
+    return _millis;
   }
   
   public String getState() {

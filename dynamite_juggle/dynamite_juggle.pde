@@ -4,8 +4,7 @@
  * A social game for one PS Move and any number of players
  * By Raphaël de Courville (Twitter: @sableRaph)
  
- * Distributed under the GRL CreativeCommons license: 
- * http://goo.gl/Ypucq (or see attached file)
+ * Video Preview: http://youtu.be/zWF-38NtHHU
  
  * HOW TO PLAY
  * Press the MOVE button to arm the explosive
@@ -27,6 +26,9 @@
  * PS Move Api By Thomas Perl: http://thp.io/2010/psmove/
  * Sound effects made with Bfxr: http://www.bfxr.net/
  
+ * Distributed under the GRL CreativeCommons license: 
+ * http://goo.gl/Ypucq (or see attached file)
+ 
  */
  
 boolean isDebugMode = true;
@@ -40,9 +42,16 @@ Audio audio;
 
 Timer quitTimer;
 
-// Min and Max time before the dynamite goes off (in milliseconds)
+// Min and Max time (in milliseconds) between which the dynamite can randomly blast
 int minimumTime = 30000;
 int maximumTime = 80000;
+
+int soundDropTime = 600;     // Time (in milliseconds) before the explosion when the volume drops
+int soundDropDuration = 600; // Duration (in milliseconds) of the fade out
+
+int blastCueTime = 600;      // How long (in milliseconds) before the blast is the cue sound played
+float cueVolume = -15.0;     // Volume at which the cue is played (min is -80 max is 6)
+
 
 PSMove move;
 
@@ -75,6 +84,7 @@ MoveButton[] moveButtons = new MoveButton[9];  // The move controller has 9 butt
 
 void setup() {
   prepareExitHandler(); // needed to execute code at shutdown
+  frameRate(60);
   
   size(100, 100);
   noStroke();
@@ -149,11 +159,31 @@ void draw() {
     //println("The fuse is burning...");
     audio.playLoop("fuse");
     
+    // Sphere is a flickering bright orange
     int rand = (int)random(100, 200);
     sphereColor = color( rand, rand/2, 0 );
-    float _remainingTime = (float)dynamite.getRemainingTime();
+    
+    // Change the size of the circle proportionally to the remaining time before the explosion
+    float _remainingTime = dynamite.getRemainingTime();
     float _fuseLength = dynamite.getFuseLength();
     radius = (int)map( _remainingTime, 0f, _fuseLength, 0f, 90f );
+    
+    
+    //float _fuseVolume = audio.getVolume("fuse");
+    //println("Remaining time: "+_remainingTime+" | \"fuse\" volume = "+_fuseVolume);
+    
+    // If the remaining time is under the given threshold, mute the sound
+    if( _remainingTime < soundDropTime) {
+      audio.fadeOut("fuse", _remainingTime, soundDropTime, soundDropDuration);
+      audio.fadeOut("burn", _remainingTime, soundDropTime, soundDropDuration);
+    }
+    
+    // Play a cue sound just before the blast 
+    if ( _remainingTime <= blastCueTime ) { 
+      audio.setVolume("cue", cueVolume);
+      audio.playOnce("cue");
+    }
+    
     
     if(dynamite.isShaken()) { // Shaking burns away some more time from the fuse
       audio.playLoop("burn");
@@ -164,11 +194,12 @@ void draw() {
     else if(audio.isPlaying("burn")) {
       audio.stopPlay("burn"); 
     }
+    
   }
 
   if (dynamite.isExplosion()) {
     //println("BOOOOOOOOOOOOOOOM!");
-    audio.stopPlay("burn","arm","fuse");
+    audio.stopPlay("burn","arm","fuse", "cue");
     audio.playOnce("blast");
     int rand = (int)random(0, 255);
     sphereColor = color( rand, rand, rand );

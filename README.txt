@@ -2,6 +2,8 @@ DYNAMITE JUGGLE
 
 A social game for one PS Move and any number of players
 By Raphael de Courville (Twitter: @sableRaph)
+
+Video Preview: http://youtu.be/zWF-38NtHHU
  
 HOW TO PLAY
 1) Press the MOVE button to arm the explosive

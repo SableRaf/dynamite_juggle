@@ -38,6 +38,11 @@ class Timer {
     }
    }
    
+   void reset() {
+     passedTime = 0;
+     penalty = 0;
+   }
+   
    boolean isRunning() {
      return running;
    }

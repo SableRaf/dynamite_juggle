@@ -6,7 +6,6 @@ class Audio {
 
   private String folder, extension;
 
-
   HashMap<String, AudioPlayer> audioPlayers; 
 
   Audio(String _folder, String _extension) {
@@ -16,8 +15,14 @@ class Audio {
     audioPlayers = new HashMap<String, AudioPlayer>(_fileCount);
     loadFiles(_folder, _extension);
   }
+  
+  /*==========================================================*/
+  /*                  PLAYBACK CONTROL                        */
+  /*==========================================================*/
+  
+  // PLAY ONCE --------------------------------------------------------------
 
-  void playOnce(String _key) {
+  public void playOnce(String _key) {
     if (audioPlayers.containsKey(_key)) { // Is that a valid key?
       AudioPlayer _player = getAudioPlayer(_key);
       if (null!=_player) { // Is there a value corresponding to that key?
@@ -33,7 +38,9 @@ class Audio {
     }
   }
 
-  void playLoop(String _key) {
+  // PLAY LOOP ----------------------------------------------------------------
+
+  public void playLoop(String _key) {
     if (audioPlayers.containsKey(_key)) { // Is that a valid key?
       AudioPlayer _player = getAudioPlayer(_key);
 
@@ -49,17 +56,21 @@ class Audio {
       println("Error: playLoop(\""+_key+"\") > no such key in audioPlayers HashMap.");
     }
   }
+  
+  // STOP (all players are stopped) ----------------------------------------
 
-  void stop() {
+  public void stop() {
     for (String _key: audioPlayers.keySet()) {
       if (audioPlayers.containsKey(_key)) { // Is that a valid key?
         AudioPlayer _player = getAudioPlayer(_key);
 
         if ( null!=_player ) { // Is there a value corresponding to that key?
+        resetVolume(_key);   // Turn the volume back to normal
           if (_player.isPlaying()) 
             _player.pause();
 
           _player.rewind();
+          resetVolume(_key);
         }
         else {
           println("Error: stop() > no value in audioPlayers Hashmap for \""+_key+"\"");
@@ -70,12 +81,15 @@ class Audio {
       }
     }
   }
+  
+  // STOP PLAY (selected list of players) ----------------------------------------
 
-  void stopPlay(String... _keys) {
+  public void stopPlay(String... _keys) {
     for (String _key: _keys) {
       if (audioPlayers.containsKey(_key)) { // Is that a valid key?
         AudioPlayer _player = getAudioPlayer(_key);
         if ( null!=_player ) { // Is there a value corresponding to that key?
+          resetVolume(_key);   // Turn the volume back to normal
           if (_player.isPlaying()) 
             _player.pause();
 
@@ -90,7 +104,102 @@ class Audio {
       }
     }
   }
+  
+  // GET VOLUME (for specified player) ------------------------------------
+  
+  public float getVolume(String _key) {
+    float _volume = -777.0;
+    if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
 
+      if (null!=_player) { // Is there a value corresponding to that key?
+          if( _player.hasControl(Controller.GAIN) ) {
+            try {
+               _volume = _player.getGain(); // “For all intents and purposes, gain is basically the same as volume.” — Minim's doc http://goo.gl/Q2NUC
+            }
+            catch (Exception ex) {
+              println("getGain(\""+_key+"\") could not complete. Returning volume = -777.0");
+            }
+          }
+          else {
+            println("Error: AudioPlayer named \""+_key+"\" doesn't have a volume control. Returning volume = -777.0");
+          }
+      }
+      else {
+        println("Error: getVolume(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: getVolume(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    }
+    return _volume; // Range should be from -80 to 6
+  }
+  
+  // FADE OUT -------------------------------------------------------------
+  
+  void fadeOut(String _key, float _remaining, int _startTime, int _duration) {
+    if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+
+      if (null!=_player) { // Is there a value corresponding to that key?
+        float _highestGain = 0.0;
+        float _lowestGain = -80.0;
+        float _endTime = (float) _startTime - _duration;
+        
+        // The closer we are to the end of the fade, the lower the volume of the sound
+        float _newVolume = map( _remaining, _startTime, _endTime, _highestGain, _lowestGain );
+        
+        _player.setGain( _newVolume );
+      }
+      else {
+        println("Error: fadeOut(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: fadeOut(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    }
+  }
+  
+  // SET VOLUME ---------------------------------------------------------
+  
+  void setVolume(String _key, float _volume) {
+      if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+
+      if (null!=_player) { // Is there a value corresponding to that key?
+          _player.setGain(_volume);
+      }
+      else {
+        println("Error: setVolume(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: setVolume(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    } 
+  }
+  
+  // RESET VOLUME ---------------------------------------------------------
+  
+  void resetVolume(String _key) {
+      if (audioPlayers.containsKey(_key)) { // Is that a valid key?
+      AudioPlayer _player = getAudioPlayer(_key);
+
+      if (null!=_player) { // Is there a value corresponding to that key?
+        float _volume = getVolume(_key);
+        if(_volume != 0.0)
+          _player.setGain(0.0);
+      }
+      else {
+        println("Error: resetVolume(\""+_key+"\") > no value in audioPlayers Hashmap for \""+_key+"\"");
+      }
+    }
+    else {
+      println("Error: resetVolume(\""+_key+"\") > no such key in audioPlayers HashMap.");
+    } 
+  }
+  
+  // IS PLAYING (get status) ----------------------------------------------
+  
   boolean isPlaying(String _key) {
     if (audioPlayers.containsKey(_key)) { // Is that a valid key?
       AudioPlayer _player = getAudioPlayer(_key);
@@ -108,8 +217,14 @@ class Audio {
       return false;
     }
   }
+  
+  /*==========================================================*/
+  /*                  MINIM MANAGEMENT                        */
+  /*==========================================================*/
+  
+  // CLOSE (terminate all players) ----------------------------------------
 
-  void close() {
+  public void close() {
     println("Closing all players");
     for (String _key: audioPlayers.keySet()) {
       AudioPlayer _player = getAudioPlayer(_key);
@@ -124,6 +239,8 @@ class Audio {
       }
     }
   }
+  
+  // GET AUDIO PLAYER ------------------------------------------------------------
 
   // Returns a specific player or null if not found
   protected AudioPlayer getAudioPlayer(String _key) {
@@ -139,12 +256,20 @@ class Audio {
     }
     return null;
   }
+  
+  /*==========================================================*/
+  /*                   FILE MANAGEMENT                        */
+  /*==========================================================*/
+  
+  // RELOAD AUDIO PLAYERS (reload from folder) ------------------------------------
 
   // Delete the existing keys and reload from folder
   protected void reloadAudioPlayers(String _folder, String _extension) {
     audioPlayers.clear();
     loadFiles(_folder, _extension);
   }
+  
+  // LOAD FILES (from folder) ------------------------------------------------------
 
   // Loads the files from a folder
   protected void loadFiles(String _folder, String _extension) {
@@ -162,6 +287,8 @@ class Audio {
       }
     }
   }
+  
+  // TRIM FILE NAME  --------------------------------------------------------------------
 
   // Return the file name without the extension (e.g. "foo.wav" -> "foo")
   protected String trimFileName( String _fileName ) {
@@ -169,6 +296,8 @@ class Audio {
     String _trimmedName  = _fileName.substring(0, _extensionIndex);
     return _trimmedName;
   }
+  
+  // LIST FILES  ------------------------------------------------------------------------
 
   // Lists the files with a given extentions in a certain folder
   protected ArrayList<String> listFiles(String _folderName, String _extention) {
@@ -191,6 +320,8 @@ class Audio {
     }
     return _fileNameList;
   }
+  
+  // COUNT FILES (with given extension in specified folder)  ------------------------------------
 
   protected int countFiles(String _folderName, String _extention) {
     String _folderPath = sketchPath + _folderName;
