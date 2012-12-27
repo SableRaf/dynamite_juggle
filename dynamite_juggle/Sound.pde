@@ -1,3 +1,9 @@
+/*
+ * Load all .wav files contained in the data folder 
+ * and give playback control over them.
+ *
+ */
+
 import ddf.minim.*;
 
 import java.io.File; // Should be fixed in version 2.0b7++
@@ -330,6 +336,7 @@ class Audio {
     int _fileCount = _files.length;
     String _plural = ""; 
     if (_fileCount>1) _plural = "s";
+    println("");
     println("We found "+_fileCount+" ."+_extention+" file"+_plural+" in the "+_folderName+" folder.");
     return _fileCount; // put the counting algorithm here
   }

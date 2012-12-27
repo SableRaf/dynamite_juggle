@@ -1,7 +1,6 @@
 // Learning Processing
 // Daniel Shiffman
 
-
 class Timer {
  
   boolean running;
@@ -10,12 +9,13 @@ class Timer {
   int totalTime; // How long Timer should last
   
   int passedTime;
-  int penalty;
+  int penalty, penaltyIncrement;
   
   Timer(int _TotalTime) {
     totalTime = _TotalTime;
     running = false;
-    penalty = 0;
+    penalty = 0;          // Penalty start value
+    penaltyIncrement = 0; // Default value no increment
   }
   
   // Starting the timer
@@ -47,13 +47,17 @@ class Timer {
      return running;
    }
    
+   void decrement() {
+     penalty+=penaltyIncrement;
+   }
+   
    int getRemaining() {
      int remaining = totalTime - passedTime;
      return remaining;
    }
    
-   void decrement() {
-     penalty+=100;
+   public void setPenaltyIncrement( int _penaltyIncrement) {
+     penaltyIncrement = _penaltyIncrement;
    }
    
  }

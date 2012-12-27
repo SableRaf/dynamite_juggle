@@ -1,6 +1,10 @@
 
-// Execute code before shutdown
-// must add "prepareExitHandler();" in setup() for Processing sketches 
+/* 
+ * Execute code before shutdown
+ * must add "prepareExitHandler();" in setup() 
+ * 
+ */
+
 private void prepareExitHandler () {
   Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
     public void run () {

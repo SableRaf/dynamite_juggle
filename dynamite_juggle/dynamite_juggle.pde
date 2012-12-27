@@ -40,32 +40,30 @@ import io.thp.psmove.*;
 Minim minim;
 Audio audio;
 
-Timer quitTimer;
-
+Timer quitTimer; // Time you have to press the SELECT button to quit the program
+  
 // Min and Max time (in milliseconds) between which the dynamite can randomly blast
 int minimumTime = 30000;
 int maximumTime = 80000;
 
+int burnRate = 25; // How much time (in ms) is taken from the countdown for each frame the dynamite is shaken
+
 int soundDropTime = 600;     // Time (in milliseconds) before the explosion when the volume drops
-int soundDropDuration = 600; // Duration (in milliseconds) of the fade out
+int soundDropDuration = 300; // Duration (in milliseconds) of the fade out
 
 int blastCueTime = 600;      // How long (in milliseconds) before the blast is the cue sound played
 float cueVolume = -15.0;     // Volume at which the cue is played (min is -80 max is 6)
 
-
 PSMove move;
 
-int triggerValue, previousTriggerValue;
+MoveManager moveManager;
 
+int triggerValue, previousTriggerValue;
 ArrayList<Integer> triggerHistory; // Will save the two last values of trigger
 
 boolean isTriggerPressed, isMovePressed, isSquarePressed, isTrianglePressed, isCrossPressed, isCirclePressed, isStartPressed, isSelectPressed, isPsPressed; 
 
-
-
 int rumbleLevel;
-
-int shakeCount;
 
 color sphereColor;
 int r, g, b;
@@ -89,14 +87,17 @@ void setup() {
   size(100, 100);
   noStroke();
   
-  move = new PSMove();    // We need one controller
+  move = new PSMove();    // We need one controller [ will be replaced by MoveManager ]
   sphereColor = color(0); // Default sphere color (0 means ligths off)
+  
+  moveManager = new MoveManager(); // Communicates with the connected Move controllers
 
   moveInit(); // Create the buttons
 
   dynamite = new Dynamite(); // Create the dynamite
   //dynamite.setDetonatorSensitivity( detonatorThreshold );
   dynamite.setFuseLength( minimumTime, maximumTime );
+  dynamite.setBurnRate(burnRate);
   
   minim = new Minim(this);  // We pass this to Minim so that it can load files from the data directory
   audio = new Audio("/data","wav");
@@ -154,7 +155,6 @@ void draw() {
     
   }
 
-
   if (dynamite.isBurning()) {
     //println("The fuse is burning...");
     audio.playLoop("fuse");
@@ -175,7 +175,7 @@ void draw() {
     // If the remaining time is under the given threshold, mute the sound
     if( _remainingTime < soundDropTime) {
       audio.fadeOut("fuse", _remainingTime, soundDropTime, soundDropDuration);
-      audio.fadeOut("burn", _remainingTime, soundDropTime, soundDropDuration);
+      audio.fadeOut("burn", _remainingTime, int(soundDropTime*2), int(soundDropDuration*.1)); // This one should fade out faster
     }
     
     // Play a cue sound just before the blast 
@@ -194,7 +194,6 @@ void draw() {
     else if(audio.isPlaying("burn")) {
       audio.stopPlay("burn"); 
     }
-    
   }
 
   if (dynamite.isExplosion()) {
@@ -261,6 +260,8 @@ void drawColorCircle(color c) {
 
 //--- MOVE ----------------------------------------------------------
 
+// TO DO: put all this in a MoveManager Class (check previous projects)
+
 void moveInit() {
   for (int i=0; i<moveButtons.length; i++) {
     moveButtons[i] = new MoveButton();
@@ -281,7 +282,9 @@ void moveUpdate(int _rumbleLevel, color _sphereColor) {
     move.get_gyroscope_frame(io.thp.psmove.Frame.Frame_SecondHalf, gx, gy, gz);
     move.get_magnetometer_vector(mx, my, mz);
     
-    detectShake(ax, az); // check if the accelerometers send extreme values
+    // Send the values of the sensors to the dynamite
+    // TO DO: this should go in the draw()
+    dynamite.updateMotion(ax, az); 
 
     int trigger = move.get_trigger();
     move.set_leds(0, 255-trigger, trigger);
@@ -373,21 +376,6 @@ void moveOff() {
   move.set_rumble(0);
   move.set_leds(0, 0, 0);
   move.update_leds();
-}
-
-void detectShake(float [] _xAcc, float [] _zAcc) {
-  if(abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
-    shakeCount+=2;
-  }
-  if(shakeCount > 10) {
-    //println("Stop shaking me!!");
-    dynamite.shake(true);
-    if(shakeCount > 15) shakeCount=15;
-  }
-  else {
-    dynamite.shake(false);
-  } 
-  if(shakeCount>0) shakeCount--;
 }
 
 

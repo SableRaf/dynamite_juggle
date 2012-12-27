@@ -1,8 +1,10 @@
 class Dynamite {
-  private Timer timer;
+  private Timer fuseCountdown;
   private Timer explosion;
+
   
   private boolean isShaken;
+  private int shakeCount;
   private int fuseLength=-1; // duration of the countdown
   private boolean triggered;
 
@@ -18,39 +20,37 @@ class Dynamite {
     explosion = new Timer(1000); // set the duration of the explosion (in ms)
     isShaken = false;
   }
-  
+
   public void arm() {
     state = READY;
   }
-  
+
   public String detonatorSuccess( int _triggerValue, ArrayList<Integer> _triggerHistory ) {
-    
+
     ArrayList<Integer> _detonatorHistory = _triggerHistory;
     int _detonatorVal = _triggerValue;
     int _prevDtnVal = _detonatorHistory.get( _detonatorHistory.size()-1 );
-    
+
     // How many zeros in the most recent values of the detonator?
     int _zeroCount = 0;
-    for(int i: _detonatorHistory) {
-     if(i==0) _zeroCount++; 
+    for (int i: _detonatorHistory) {
+      if (i==0) _zeroCount++;
     }
-    
-    //println("triggerValue = "+triggerValue);
-    
+
     // Check if the detonator was pressed swiftly enough...
     if ( _detonatorVal == 255 && _zeroCount >= 1 ) {
       return "success";
     }
-    else if( _detonatorVal == 255 && _prevDtnVal < 255) {
+    else if ( _detonatorVal == 255 && _prevDtnVal < 255) {
       return "failure";
     }
     return "wait";
   }
 
   public void igniteFuse() {
-    if (null!=timer) {
+    if (null!=fuseCountdown) {
       println("started the fuse");
-      timer.start();
+      fuseCountdown.start();
       state = FUSE;
       triggered = true;
     }
@@ -58,17 +58,17 @@ class Dynamite {
       println("You have to choose a fuse length before you can ignite it.");
     }
   }
-  
+
   public void consume() {
-    timer.decrement();
+    fuseCountdown.decrement();
   }
-  
+
   public void reset() {
-    timer.reset();
+    fuseCountdown.reset();
     triggered = false;
     state = SETUP;
   }
-  
+
   // --- Getters ---------------------------------
 
   public int getFuseLength() {
@@ -78,18 +78,24 @@ class Dynamite {
   }
 
   public int getRemainingTime() {
-    int _millis =  timer.getRemaining();
+    int _millis =  fuseCountdown.getRemaining();
     return _millis;
   }
-  
+
   public String getState() {
     switch(state) {
-      case 0: return "Setup";
-      case 1: return "Ready";
-      case 2: return "Fuse";
-      case 3: return "Exploding";
-      case 4: return "End";
-      default: return "Something went wrong: Invalid state";
+    case 0: 
+      return "Setup";
+    case 1: 
+      return "Ready";
+    case 2: 
+      return "Fuse";
+    case 3: 
+      return "Exploding";
+    case 4: 
+      return "End";
+    default: 
+      return "Something went wrong: Invalid state";
     }
   }
 
@@ -102,13 +108,25 @@ class Dynamite {
     if (state == READY) return true;
     return false;
   }
-  
+
   public boolean isShaken() {
-   return isShaken; 
+    return isShaken;
   }
-  
-  public void shake(boolean _shake) {
-   isShaken = _shake; 
+
+  void updateMotion(float [] _xAcc, float [] _zAcc) {
+    if (abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
+      shakeCount+=2;
+    }
+
+    if (shakeCount > 10) {
+      //println("Stop shaking me!!");
+      isShaken = true;
+      if (shakeCount > 15) shakeCount=15;
+    }
+    else {
+      isShaken = false;
+    } 
+    if (shakeCount>0) shakeCount--;
   }
 
   public boolean isBurning() {
@@ -119,8 +137,8 @@ class Dynamite {
   }
 
   public boolean isExplosion() {
-    if (triggered && timer.isFinished() && state != END) {
-      if(state!=BOOM) explosion.start();
+    if (triggered && fuseCountdown.isFinished() && state != END) {
+      if (state!=BOOM) explosion.start();
       state = BOOM;
       return true;
     }
@@ -139,12 +157,16 @@ class Dynamite {
     }
     return false;
   }
-  
+
   // --- Setters ---------------------------------
 
   public void setFuseLength(int _lengthMin, int _lengthMax ) {
     fuseLength = (int)random(_lengthMin, _lengthMax);
-    timer = new Timer(fuseLength);
+    fuseCountdown = new Timer(fuseLength);
+  }
+  
+  public void setBurnRate(int _burnRate ) {
+    fuseCountdown.setPenaltyIncrement(_burnRate);
   }
 }
 
