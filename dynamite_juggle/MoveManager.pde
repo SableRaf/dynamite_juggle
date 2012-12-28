@@ -36,33 +36,34 @@ class MoveManager {
   
       MoveController move = new MoveController(i);
     
-      String id = move.get_serial();
+      String serial = move.get_serial();
       String connection = move.get_connection_name();
   
-      if (!controllers.containsKey(id)) { // Check for duplicates
+      if (!controllers.containsKey(serial)) { // Check for duplicates
         try { 
-          controllers.put(id, move);        // Add the id (MAC address) and controller to the list
-          println("Found "+id+" via "+connection);
+          controllers.put(serial, move);        // Add the id (MAC address) and controller to the list
+          println("Found "+serial+" via "+connection);
         }
         catch (Exception ex) {
-          println("Error trying to register Controller #"+i+" with address "+id);
+          println("Error trying to register Controller #"+i+" with address "+serial);
           ex.printStackTrace();
         }
         unique_connected++; // We just added one unique controller
       }
       else {
         if(connection == "Bluetooth" && priority_bluetooth) {
-          MoveController duplicate_move = controllers.get(id);
+          MoveController duplicate_move = controllers.get(serial);
           String duplicate_connection = duplicate_move.get_connection_name(); // 
           
-          controllers.put(id, move);     // Overwrite the controller at this id
-          println("Found "+id+" via "+connection+" (overwrote "+duplicate_connection+")");
+          controllers.put(serial, move);     // Overwrite the controller at this id
+          println("Found "+serial+" via "+connection+" (overwrote "+duplicate_connection+")");
         }
         else {
-          println("Found "+id+" via "+connection+" (duplicate ignored)");
+          println("Found "+serial+" via "+connection+" (duplicate ignored)");
         }
       }
     }
+    //init_serial_array(controllers);
   }
   
   void update() {
@@ -78,4 +79,43 @@ class MoveManager {
       move.shutdown();
     }
   }
+
+  // --- Getters & Setters ----------------------
+  
+  int get_controller_count() {
+   return unique_connected;
+  }
+  
+  // Return the Mac adress of a given controller
+  String get_serial(int i) {
+    int iterator = 0;
+    String serial = "";
+    for (String id: controllers.keySet()) {
+      if(iterator==i)
+        serial = id;
+      else
+        serial = "error in get_serial()";
+      iterator++;
+    }
+    return serial;
+  }
+  
+  Set get_serials() {
+   Set serials = controllers.keySet();
+   return serials; 
+  }
+  
+  MoveController get_controller(String id) {
+    MoveController m = controllers.get(id);
+    return m;
+  }
+  
+  void set_sphere_color(String id, color col) {
+      MoveController move = controllers.get(id);     // Give me the controller with that MAC address
+      move.set_leds( col );
+  }
+  
+  // --- Internal methods -----------------------
+  
+  
 }

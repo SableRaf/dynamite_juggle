@@ -1,7 +1,6 @@
 class Dynamite {
   private Timer fuseCountdown;
   private Timer explosion;
-
   
   private boolean isShaken;
   private int shakeCount;
@@ -113,8 +112,8 @@ class Dynamite {
     return isShaken;
   }
 
-  void updateMotion(float [] _xAcc, float [] _zAcc) {
-    if (abs(_xAcc[0]) > 1.2 || abs(_zAcc[0]) > 1.2) {
+  void updateMotion(float _xAcc, float _zAcc) {
+    if (abs(_xAcc) > 1.2 || abs(_zAcc) > 1.2) {
       shakeCount+=2;
     }
 
@@ -168,5 +167,7 @@ class Dynamite {
   public void setBurnRate(int _burnRate ) {
     fuseCountdown.setPenaltyIncrement(_burnRate);
   }
+  
+  // --- Internal methods -------------------------
 }
 

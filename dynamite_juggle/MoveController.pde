@@ -9,6 +9,11 @@ class MoveController extends PSMove {
   private String connection_name;
   private String battery_name;
 
+  // Sensor values
+  float [] ax = {0.f}, ay = {0.f}, az = {0.f};
+  float [] gx = {0.f}, gy = {0.f}, gz = {0.f};
+  float [] mx = {0.f}, my = {0.f}, mz = {0.f};
+
   // enum values returned by PSMove.get_battery()
   final int Batt_MIN           = 0x00;
   final int Batt_20Percent     = 0x01;
@@ -23,12 +28,15 @@ class MoveController extends PSMove {
   final int Conn_Bluetooth = 0; // if the controller is connected via Bluetooth
   final int Conn_USB       = 1; // if the controller is connected via USB
   final int Conn_Unknown   = 2; // on error
-  
+
   private MoveButton[] moveButtons = new MoveButton[9];  // The move controller has 9 buttons
 
   boolean isTriggerPressed, isMovePressed, isSquarePressed, isTrianglePressed, isCrossPressed, isCirclePressed, isStartPressed, isSelectPressed, isPsPressed; 
-  int trigger_value, previous_trigger_value;
+  int trigger_value=0, previous_trigger_value=0;
   ArrayList<Integer> trigger_history;
+  private int history_length = 2;
+  
+  int rumbleLevel;
 
   color sphereColor;
   int r, g, b;
@@ -38,15 +46,16 @@ class MoveController extends PSMove {
     init();
   }
 
-  void init() {
+  void init() {    
     get_serial();
     getConnection_type();
-    get_battery();
+    update_battery();
+    create_trigger_history();
     create_buttons();
   }
 
   void update() {
-    get_battery();
+    update_battery();
     update_buttons();
     super.update_leds();
   }
@@ -65,10 +74,6 @@ class MoveController extends PSMove {
   
   // --- Getters & Setters --------------------
   
-  void set_sphere_color(color col) {
-    sphere_color = col;
-  }
-  
   color get_sphere_color() {
     return sphere_color;
   }
@@ -80,7 +85,62 @@ class MoveController extends PSMove {
   String get_battery_name() {
     return battery_name;
   }
-    
+  
+  // Sensors get
+  
+  float get_ax() {
+    return ax[0];
+  }
+  
+  float get_az() {
+    return az[0];
+  }
+  
+  // Buttons get
+  
+  ArrayList<Integer> get_trigger_history() {
+   return trigger_history;
+  }
+  
+  int get_trigger_value() {
+    return trigger_value;
+  }
+  
+  boolean get_isTriggerPressed() {
+    return isTriggerPressed;
+  }
+  
+  boolean get_isMovePressed() {
+    return isMovePressed;
+  }
+  
+  boolean get_isSquarePressed() {
+    return isSquarePressed;
+  }
+  
+  boolean get_isTrianglePressed() {
+    return isTrianglePressed;
+  }
+  
+  boolean get_isCrossPressed() {
+    return isCrossPressed;
+  }
+  
+  boolean get_isCirclePressed() {
+    return isCirclePressed;
+  }
+  
+  boolean get_isSelectPressed() {
+    return isSelectPressed;
+  }
+  
+  boolean get_isStartPressed() {
+    return isStartPressed;
+  }
+  
+  boolean get_isPsPressed() {
+    return isPsPressed;
+  }    
 
   
   // --- Inherited methods --------------------
@@ -97,48 +157,53 @@ class MoveController extends PSMove {
   }
   
   // Get the current battery level of the controller
-  int get_battery() {
+  int update_battery() {
     battery_level = super.get_battery(); // Save the battery level of the controller
     battery_name = get_battery_level_name(battery_level);
     return battery_level;
   }
   
   void set_rumble(int level) {
+    rumbleLevel = level;
     super.set_rumble(level);
   }
   
-  void set_leds() {
-    // Just in case the colorMode is HSB, we translate to RGB
-    int r = (int) red   ( get_sphere_color() );
-    int g = (int) green ( get_sphere_color() );
-    int b = (int) blue  ( get_sphere_color() );
-    super.set_leds(r, g, b);
+  int get_rumble() {
+    return rumbleLevel;
   }
   
+  void set_leds(int r, int g, int b) {
+    sphere_color = color(r,g,b);
+    super.set_leds(r,g,b);
+  }
+  
+  void set_leds(color col) {
+    sphere_color = col;
+    int r = (int)red(col);
+    int g = (int)green(col);
+    int b = (int)blue(col);
+    super.set_leds(r,g,b);
+  }
+
   // --- Internal methods ---------------------
 
   protected void create_buttons() {
     for (int i=0; i<moveButtons.length; i++) {
       moveButtons[i] = new MoveButton();
-    }  
+    }
+  }
+  
+  protected void create_trigger_history() {
+   trigger_history = new ArrayList<Integer>(); // We want to keep tracks of previous trigger values to detect ignition 
   }
   
   protected void update_buttons() {
     // Read inputs from the move  
     while (super.poll () != 0) {
-      
-      // Sensor values
-      float [] ax = {0.f}, ay = {0.f}, az = {0.f};
-      float [] gx = {0.f}, gy = {0.f}, gz = {0.f};
-      float [] mx = {0.f}, my = {0.f}, mz = {0.f};
   
       super.get_accelerometer_frame(io.thp.psmove.Frame.Frame_SecondHalf, ax, ay, az);
       super.get_gyroscope_frame(io.thp.psmove.Frame.Frame_SecondHalf, gx, gy, gz);
       super.get_magnetometer_vector(mx, my, mz);
-      
-      // Send the values of the sensors to the dynamite
-      // TO DO: Dynamite should request these values explicitely
-      dynamite.updateMotion(ax, az); 
   
       int trigger = super.get_trigger();
       moveButtons[0].setValue(trigger);
@@ -200,8 +265,8 @@ class MoveController extends PSMove {
   
     // Save previous trigger values in a list
     trigger_history.add(previous_trigger_value);
-    if( trigger_history.size() > 2 + detonatorThreshold ) {
-       trigger_history.remove(0);
+    if( trigger_history.size() > history_length + detonatorThreshold ) {
+      trigger_history.remove(0);
     }
   
     // Store the values in conveniently named variables

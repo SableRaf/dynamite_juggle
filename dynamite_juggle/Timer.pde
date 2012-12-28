@@ -60,4 +60,8 @@ class Timer {
      penaltyIncrement = _penaltyIncrement;
    }
    
+   public void setLength(int time) {
+     totalTime = time;
+   }
+   
  }
